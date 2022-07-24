@@ -30,8 +30,8 @@ func main() {
 
 	res, err := c.Add(context.Background(), req)
 	if err != nil {
-		log.Fatalf("Error invoking Greet RPC: %v", err)
+		log.Fatalf("Error invoking Sum RPC: %v", err)
 	}
 
-	log.Printf("Resoonse value: %v", res)
+	log.Printf("Response value: %v", res)
 }
