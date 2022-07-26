@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 
 	"github.com/vindecodex/gRPZ/greet/greetpb"
@@ -19,6 +20,17 @@ func main() {
 
 	c := greetpb.NewGreetServiceClient(cc)
 
+	// res, err := unaryGreet(c)
+	res, err := serverStreamGreet(c)
+	if err != nil {
+		log.Fatalf("Error invoking Greet RPC: %v", err)
+	}
+
+	log.Printf("Response value: %v", res)
+}
+
+func unaryGreet(c greetpb.GreetServiceClient) (*greetpb.GreetResponse, error) {
+	fmt.Println("Invoke unary greet")
 	req := &greetpb.GreetRequest{
 		Greeting: &greetpb.Greeting{
 			FirstName: "Vincent",
@@ -27,9 +39,30 @@ func main() {
 	}
 
 	res, err := c.Greet(context.Background(), req)
-	if err != nil {
-		log.Fatalf("Error invoking Greet RPC: %v", err)
+	return res, err
+}
+
+func serverStreamGreet(c greetpb.GreetServiceClient) (greetpb.GreetService_GreetManyTimesClient, error) {
+	fmt.Println("Invoke server streaming greet")
+	req := &greetpb.GreetManyTimesRequest{
+		Greeting: &greetpb.Greeting{
+			FirstName: "Vincent",
+			LastName:  "Villaluna",
+		},
 	}
 
-	log.Printf("Response value: %v", res)
+	res, err := c.GreetManyTimes(context.Background(), req)
+	for {
+		result, err := res.Recv()
+		if err == io.EOF {
+			// end of stream
+			break
+		}
+		if err != nil {
+			log.Fatalf("Something is wrong: %v", err)
+		}
+		log.Printf("Response value: %v", result)
+	}
+	return res, err
+
 }
